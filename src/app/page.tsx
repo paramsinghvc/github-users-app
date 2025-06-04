@@ -1,103 +1,114 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useForm } from 'react-hook-form';
+import { useState } from 'react';
+import Button from '@mui/material/Button';
+import { createTheme, TextField, ThemeProvider } from '@mui/material';
+import UserItem from './components/user-item';
+import { RankedGithubUser } from '@/lib/github-service';
+
+type FormData = {
+  username: string;
+  depth: number;
+};
+
+const theme = createTheme({
+  palette: {
+    primary: { main: '#6750a4' },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: '9999px',
+          textTransform: 'none',
+          fontWeight: 500,
+          fontSize: '0.9rem',
+          padding: '10px 24px',
+        },
+      },
+    },
+  },
+});
+
+export default function GitHubUsers() {
+  const [users, setUsers] = useState<RankedGithubUser[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: { username: 'paramsinghvc', depth: 2 },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setUsers([]);
+    setApiError('');
+    try {
+      const res = await fetch(
+        `/api/github-users?username=${data.username}&depth=${data.depth}`
+      );
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setUsers(json);
+    } catch {
+      setApiError('Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <ThemeProvider theme={theme}>
+      <main className="max-w-screen-lg mx-auto p-6">
+        <h1 className="text-2xl font-medium mb-4">GitHub User Ranker</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 my-8 flex items-stretch gap-8"
+        >
+          <TextField
+            variant="filled"
+            label="GitHub Username"
+            {...register('username', { required: 'Username is required' })}
+            error={!!errors.username}
+            helperText={errors.username?.message}
+            autoFocus
+          />
+          <TextField
+            type="number"
+            variant="filled"
+            label="Depth (1-5)"
+            {...register('depth', {
+              required: 'Depth is required',
+              min: { value: 1, message: 'Min 1' },
+              max: { value: 5, message: 'Max 5' },
+            })}
+            error={!!errors.depth}
+            helperText={errors.depth?.message}
+          />
+          <Button
+            type="submit"
+            disabled={loading}
+            variant="contained"
+            disableElevation
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {loading ? 'Loading...' : 'Fetch Ranked Users'}
+          </Button>
+        </form>
+
+        {apiError && <p className="text-red-600 text-sm mb-4">{apiError}</p>}
+
+        <div className="space-y-4 flex flex-wrap gap-8">
+          {users.map((user) => (
+            <UserItem user={user} key={user.login} />
+          ))}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    </ThemeProvider>
   );
 }

@@ -29,7 +29,9 @@ const attachFollowersCount = (
   user: GitHubUser
 ): RankedGithubUser => R.assoc('followersCount', count, user);
 
-async function getUserFollowers(username: string): Promise<GitHubUser[]> {
+export async function getUserFollowers(
+  username: string
+): Promise<GitHubUser[]> {
   const res = await fetch(
     `https://api.github.com/users/${username}/followers?per_page=${PAGE_SIZE}`,
     {
@@ -40,7 +42,7 @@ async function getUserFollowers(username: string): Promise<GitHubUser[]> {
   return R.map(pickMinimalUserFields, raw);
 }
 
-async function getUserData(username: string): Promise<GitHubUser> {
+export async function getUserData(username: string): Promise<GitHubUser> {
   const res = await fetch(`https://api.github.com/users/${username}`, {
     headers: { Authorization: AUTH_TOKEN },
   });

@@ -1,55 +1,44 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '@mui/material/Button';
 import { createTheme, TextField, ThemeProvider } from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
+
 import UserItem from './components/user-item';
 import { RankedGithubUser } from '@/lib/github-service';
 import useInfiniteScroll from './hooks/useInfiniteScroll';
 import SortButton, { SortOption } from './components/sort-button';
+import { useAppState } from './contexts/AppStateContext';
+import { DotLottie, DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 type FormData = {
   username: string;
   depth: number;
 };
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#6750a4' },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '9999px',
-          textTransform: 'none',
-          fontWeight: 500,
-          fontSize: '0.9rem',
-          padding: '10px 24px',
-        },
-      },
-    },
-  },
-});
-
 export default function GitHubUsers() {
-  const [users, setUsers] = useState<RankedGithubUser[]>([]);
+  const { get, set } = useAppState();
+  const loadedUsers = get('loadedUsers');
+  const dotLottieRef = useRef<DotLottie>(null);
+
+  const [users, setUsers] = useState<RankedGithubUser[]>(loadedUsers);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+
   const {
     visibleData: visibleUsers,
     loaderRef,
     hasMore,
     loadMore,
   } = useInfiniteScroll<RankedGithubUser>(users, 6);
-  console.log({ visibleUsers, users });
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({
-    defaultValues: { username: 'paramsinghvc', depth: 3 },
+    defaultValues: { username: 'paramsinghvc', depth: 2 },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -61,8 +50,9 @@ export default function GitHubUsers() {
         `/api/github-users?username=${data.username}&depth=${data.depth}`
       );
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setUsers(json);
+      const users = await res.json();
+      setUsers(users);
+      set('loadedUsers', users);
     } catch {
       setApiError('Failed to fetch users');
     } finally {
@@ -73,6 +63,7 @@ export default function GitHubUsers() {
   const handleSortChange = (sortBy: SortOption) => {
     const sortedUsers = sortUsers(users, sortBy);
     setUsers(sortedUsers);
+    set('loadedUsers', sortedUsers);
 
     function sortUsers(users: RankedGithubUser[], sortBy: SortOption) {
       switch (sortBy) {
@@ -90,12 +81,47 @@ export default function GitHubUsers() {
     }
   };
 
-  return (
-    <ThemeProvider theme={theme}>
-      <main className="max-w-screen-lg mx-auto p-6">
-        <h1 className="text-2xl font-medium mb-4">GitHub User Ranker</h1>
+  useEffect(() => {
+    if (loading) dotLottieRef.current?.play();
+    else dotLottieRef.current?.pause();
+  }, [loading]);
 
-        <form
+  const isInitialState = users.length === 0 && !apiError;
+
+  return (
+    <main
+      className={`flex flex-col items-center max-h-screen overflow-hidden ${
+        loading && 'bg-purple-50'
+      }`}
+    >
+      <motion.header
+        layout
+        className={`flex-shrink-0 flex flex-col items-center justify-center mx-auto w-screen p-6 ${
+          isInitialState ? 'h-screen' : 'bg-purple-50'
+        }`}
+      >
+        <motion.h1 layout className="text-2xl font-medium mb-4">
+          GitHub User Ranker
+        </motion.h1>
+
+        <motion.div
+          className={`h-[500px] w-[500px] ${!isInitialState && 'hidden'}`}
+          role="presentation"
+        >
+          <DotLottieReact
+            src="https://lottie.host/9eda8328-3d03-43c5-924c-4707caebde09/9Xc3cgJBsn.lottie"
+            speed={1}
+            loop
+            width="500px"
+            height="500px"
+            dotLottieRefCallback={(dotLottie) => {
+              dotLottieRef.current = dotLottie;
+            }}
+          />
+        </motion.div>
+
+        <motion.form
+          layout
           onSubmit={handleSubmit(onSubmit)}
           className="space-y-4 my-8 flex items-stretch gap-8"
         >
@@ -127,8 +153,12 @@ export default function GitHubUsers() {
           >
             {loading ? 'Loading...' : 'Fetch Ranked Users'}
           </Button>
-        </form>
-
+        </motion.form>
+      </motion.header>
+      <motion.div
+        className="flex-grow w-full max-w-screen-lg p-4 overflow-y-auto"
+        layout
+      >
         {apiError && <p className="text-red-600 text-sm mb-4">{apiError}</p>}
         <div className="flex flex-col items-center gap-8 pt-4">
           {visibleUsers.length > 0 && (
@@ -136,11 +166,17 @@ export default function GitHubUsers() {
           )}
 
           <div className=" pb-[100px] overflow-auto flex flex-col items-center">
-            <div className="space-y-4 flex flex-wrap gap-8 pb-20">
+            <motion.ul className="space-y-4 flex flex-wrap gap-8 pb-20 list-none">
               {visibleUsers.map((user) => (
-                <UserItem user={user} key={user.login} />
+                <motion.li
+                  key={user.login}
+                  layout
+                  layoutId={`avatar-${user.login}`}
+                >
+                  <UserItem user={user} />
+                </motion.li>
               ))}
-            </div>
+            </motion.ul>
             {hasMore && (
               <Button
                 disabled={loading}
@@ -155,7 +191,7 @@ export default function GitHubUsers() {
             )}
           </div>
         </div>
-      </main>
-    </ThemeProvider>
+      </motion.div>
+    </main>
   );
 }

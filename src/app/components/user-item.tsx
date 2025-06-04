@@ -1,15 +1,25 @@
-/* eslint-disable @next/next/no-img-element */
+'use client';
+
 import React from 'react';
 import { RankedGithubUser } from '@/lib/github-service';
 import { Hash, Clock } from 'react-feather';
+import Link from 'next/link';
+import { useAppState } from '../contexts/AppStateContext';
+import { motion } from 'framer-motion';
+
+const MotionedLink = motion(Link);
 
 export default function UserItem({ user }: { user: RankedGithubUser }) {
+  const { set } = useAppState();
+
   return (
-    <div
+    <MotionedLink
       key={user.login}
-      className="flex items-center gap-4 h-[300px] w-[300px] rounded-3xl shadow-sm hover:shadow-md transition overflow-hidden relative"
+      href={`/users/${user.login}`}
+      onClick={() => set('selectedUser', user)}
+      className="flex items-center gap-4 h-[309px] w-[309px] rounded-3xl shadow-sm hover:shadow-md transition overflow-hidden relative"
     >
-      <img
+      <motion.img
         src={user.avatar_url}
         alt={user.login}
         className="object-cover w-full h-full"
@@ -34,7 +44,7 @@ export default function UserItem({ user }: { user: RankedGithubUser }) {
           </div>
         </div>
       </div>
-    </div>
+    </MotionedLink>
   );
 }
 

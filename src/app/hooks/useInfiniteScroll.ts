@@ -18,7 +18,6 @@ export default function useInfiniteScroll<T>(data: T[], batchSize = 5) {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          console.log('intersecting');
           loadMore();
         }
       },

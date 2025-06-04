@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import { createTheme, TextField, ThemeProvider } from '@mui/material';
 import UserItem from './components/user-item';
 import { RankedGithubUser } from '@/lib/github-service';
+import useInfiniteScroll from './hooks/useInfiniteScroll';
+import SortButton, { SortOption } from './components/sort-button';
 
 type FormData = {
   username: string;
@@ -35,13 +37,19 @@ export default function GitHubUsers() {
   const [users, setUsers] = useState<RankedGithubUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
-
+  const {
+    visibleData: visibleUsers,
+    loaderRef,
+    hasMore,
+    loadMore,
+  } = useInfiniteScroll<RankedGithubUser>(users, 6);
+  console.log({ visibleUsers, users });
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({
-    defaultValues: { username: 'paramsinghvc', depth: 2 },
+    defaultValues: { username: 'paramsinghvc', depth: 3 },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -59,6 +67,26 @@ export default function GitHubUsers() {
       setApiError('Failed to fetch users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSortChange = (sortBy: SortOption) => {
+    const sortedUsers = sortUsers(users, sortBy);
+    setUsers(sortedUsers);
+
+    function sortUsers(users: RankedGithubUser[], sortBy: SortOption) {
+      switch (sortBy) {
+        case 'Username':
+          return [...users].sort((a, b) => a.login.localeCompare(b.login));
+        case 'Ranking':
+          return [...users].sort((a, b) => b.followersCount - a.followersCount);
+        case 'Created Date':
+          return [...users].sort(
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
+          );
+      }
     }
   };
 
@@ -102,11 +130,30 @@ export default function GitHubUsers() {
         </form>
 
         {apiError && <p className="text-red-600 text-sm mb-4">{apiError}</p>}
+        <div className="flex flex-col items-center gap-8 pt-4">
+          {visibleUsers.length > 0 && (
+            <SortButton onSortChange={handleSortChange} className="self-end" />
+          )}
 
-        <div className="space-y-4 flex flex-wrap gap-8">
-          {users.map((user) => (
-            <UserItem user={user} key={user.login} />
-          ))}
+          <div className=" pb-[100px] overflow-auto flex flex-col items-center">
+            <div className="space-y-4 flex flex-wrap gap-8 pb-20">
+              {visibleUsers.map((user) => (
+                <UserItem user={user} key={user.login} />
+              ))}
+            </div>
+            {hasMore && (
+              <Button
+                disabled={loading}
+                variant="outlined"
+                href=""
+                disableElevation
+                onClick={loadMore}
+                ref={loaderRef}
+              >
+                Load More
+              </Button>
+            )}
+          </div>
         </div>
       </main>
     </ThemeProvider>

@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-// components/UserAvatar.tsx
 'use client';
 
 import { motion } from 'framer-motion';
@@ -11,11 +10,14 @@ type Props = {
   alt?: string;
 };
 
-export default function UserAvatar({ src, layoutId, alt }: Props) {
+export default function UserAvatar({ src, size = 200, layoutId, alt }: Props) {
   return (
     <motion.div
       layoutId={layoutId}
-      className="rounded-full overflow-hidden h-[200px] w-[200px]"
+      role="img"
+      aria-label={alt || 'User avatar'}
+      className="rounded-full overflow-hidden"
+      style={{ height: size, width: size }}
     >
       <img
         src={src}

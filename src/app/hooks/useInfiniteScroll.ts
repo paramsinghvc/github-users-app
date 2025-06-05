@@ -24,9 +24,10 @@ export default function useInfiniteScroll<T>(data: T[], batchSize = 5) {
       { threshold: 1 }
     );
 
-    if (loaderRef.current) observer.observe(loaderRef.current);
+    const current = loaderRef.current;
+    if (current) observer.observe(current);
     return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
+      if (current) observer.unobserve(current);
     };
   }, [loadMore]);
 

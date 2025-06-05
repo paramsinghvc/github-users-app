@@ -2,8 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { useEffect, useRef, useState } from 'react';
-import Button from '@mui/material/Button';
-import { TextField } from '@mui/material';
+import { TextField, Button } from '@mui/material';
 import { motion } from 'framer-motion';
 
 import UserItem from './components/user-item';
@@ -33,6 +32,7 @@ export default function GitHubUsers() {
     hasMore,
     loadMore,
   } = useInfiniteScroll<RankedGithubUser>(users, 6);
+
   const {
     register,
     handleSubmit,
@@ -94,7 +94,7 @@ export default function GitHubUsers() {
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white p-2 z-50"
       >
-        + Skip to content +{' '}
+        + Skip to content +
       </a>
       <main
         id="#main-content"
@@ -163,6 +163,7 @@ export default function GitHubUsers() {
             </Button>
           </motion.form>
         </motion.header>
+
         <motion.div
           className="flex-grow w-full max-w-screen-lg p-4 overflow-y-auto"
           layout
@@ -176,6 +177,7 @@ export default function GitHubUsers() {
               {apiError}
             </p>
           )}
+
           <div className="flex flex-col items-center gap-8 pt-4">
             {visibleUsers.length > 0 && (
               <SortButton
@@ -184,7 +186,7 @@ export default function GitHubUsers() {
               />
             )}
 
-            <div className=" pb-[100px] overflow-auto flex flex-col items-center">
+            <div className="pb-[100px] overflow-auto flex flex-col items-center">
               <motion.ul className="space-y-4 flex flex-wrap gap-8 pb-20 list-none">
                 {visibleUsers.map((user) => (
                   <motion.li

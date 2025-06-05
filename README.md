@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Screenshots
+
+![](https://github.com/user-attachments/assets/73a01429-c0a5-40ca-a033-2caf2e822820)
+![](https://github.com/user-attachments/assets/b7dc9abc-43cd-4bb3-80a8-6138bbdd3ad9)
+
+## Running the app locally
+
+- Run `yarn install`
+- Create `.env.local` in the root and add env variable `GITHUB_PAT=Bearer ...` in it
+- Run `yarn dev`
+
 ## Getting Started
 
 First, run the development server:
